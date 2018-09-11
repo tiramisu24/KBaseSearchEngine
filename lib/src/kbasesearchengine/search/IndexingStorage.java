@@ -7,9 +7,11 @@ import java.util.Map;
 import java.util.Set;
 
 import kbasesearchengine.common.GUID;
+import kbasesearchengine.events.StatusEvent;
 import kbasesearchengine.events.handler.SourceData;
 import kbasesearchengine.parse.ParsedObject;
 import kbasesearchengine.system.ObjectTypeParsingRules;
+import org.eclipse.jetty.util.IO;
 
 public interface IndexingStorage {
     
@@ -57,6 +59,8 @@ public interface IndexingStorage {
      */
     public Map<GUID, Boolean> checkParentGuidsExist(Set<GUID> parentGuids)
             throws IOException;
+
+    public boolean lookupParentId(String type, GUID guid) throws IOException;
 
     public void flushIndexing(ObjectTypeParsingRules objectType) throws IOException;
     
@@ -162,4 +166,5 @@ public interface IndexingStorage {
      * @throws IndexingConflictException if a conflict occurs while modifying the index. 
      */
     void unpublishAllVersions(GUID guid) throws IOException, IndexingConflictException;
+
 }

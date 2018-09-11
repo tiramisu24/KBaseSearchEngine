@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kbasesearchengine.events.StatusEvent;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -503,6 +505,34 @@ public class ElasticIndexingStorage implements IndexingStorage {
             ret.put(guid, id);
         }
         return ImmutableMap.copyOf(ret);
+    }
+
+
+    public boolean lookupParentId(final String type, final GUID guid) throws IOException {
+        final String indexName = indexNamePrefix + type + "*";
+
+        final Set<GUID> guids = new HashSet<>();
+        guids.add(guid);
+
+        Map<String, Object> doc =
+                ImmutableMap.of("query",
+                        ImmutableMap.of("bool",
+                                ImmutableMap.of("filter",
+                                        Arrays.asList(ImmutableMap.of("terms",
+                                                ImmutableMap.of("pguid",
+                                                        guids.stream().map(u -> u.toString()).collect(Collectors.toList())))))));
+
+        String urlPath = "/" + indexName + "/" + getAccessTableName() + "/_search";
+        Response resp = makeRequestNoConflict("GET", urlPath, doc);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = UObject.getMapper().readValue(
+                resp.getEntity().getContent(), Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> hitMap = (Map<String, Object>) data.get("hits");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> hitList = (List<Map<String, Object>>) hitMap.get("hits");
+
+        return hitList.size() > 0;
     }
 
     public Map<String, Set<GUID>> groupParentIdsByIndex(Set<GUID> ids) throws IOException {
