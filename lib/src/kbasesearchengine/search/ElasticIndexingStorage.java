@@ -508,12 +508,13 @@ public class ElasticIndexingStorage implements IndexingStorage {
     }
 
 
-    public boolean lookupParentId(final String type, final GUID guid) throws IOException {
+    public boolean hasParentId(final String type, final GUID guid) throws IOException {
         final String indexName = indexNamePrefix + type + "*";
 
         final Set<GUID> guids = new HashSet<>();
         guids.add(guid);
 
+        // doc = {"query": {"bool": {"filter": [{"terms": {"pguid": [guids]}}]}}}
         Map<String, Object> doc =
                 ImmutableMap.of("query",
                         ImmutableMap.of("bool",
